@@ -25,33 +25,35 @@ Public Class Form1
         IdPhoto = New PngImage
         ReDim Buff(3)
         With TreeView1.Nodes.Add("ID Photo").Nodes
-            ' Traverse all chunks.
-            Do
-                Dim ChunkTypeString As String
-                Fs.Read(Buff, 0, 4)
-                If BitConverter.IsLittleEndian Then Array.Reverse(Buff) ' The length member is stored as big-endian. Reverse the byte-order.
-                Length = BitConverter.ToUInt32(Buff, 0)
-                ReDim RawData(Length - 1)
-                Fs.Read(Buff, 0, 4)
-                ChunkType = BitConverter.ToUInt32(Buff, 0)
-                ChunkTypeString = Encoding.ASCII.GetString(Buff)
-                Fs.Read(RawData, 0, Length)
-                Fs.Read(Buff, 0, 4)
-                CheckSum = BitConverter.ToUInt32(Buff, 0)
-                IdPhoto.AddChunk(Length, ChunkType, CheckSum, RawData)
-                Offset += 8
-                With .Add("Chunk #" + CStr(IdPhoto.NumberOfChunks)).Nodes
-                    .Add("Offset to Chunk Raw Data: 0x" + Hex(Offset))
-                    .Add("Size of Chunk:" + Str(Length) + " bytes")
-                    .Add("Chunk CRC: 0x" + Hex(CheckSum))
-                    .Add("Type of Chunk: " + ChunkTypeString)
-                End With
-                Offset += Length + 4
-            Loop Until ChunkType = PngImage.PngChunkTypeIEND
-            If IdPhoto.ValidateImage() = False Then
-                MsgBox("Validation failed! This ID-Photo PNG does not seem valid!", vbExclamation, "Error")
-                GoTo EndDump
-            End If
+            With .Add("Chunks").Nodes
+                ' Traverse all chunks.
+                Do
+                    Dim ChunkTypeString As String
+                    Fs.Read(Buff, 0, 4)
+                    If BitConverter.IsLittleEndian Then Array.Reverse(Buff) ' The length member is stored as big-endian. Reverse the byte-order.
+                    Length = BitConverter.ToUInt32(Buff, 0)
+                    ReDim RawData(Length - 1)
+                    Fs.Read(Buff, 0, 4)
+                    ChunkType = BitConverter.ToUInt32(Buff, 0)
+                    ChunkTypeString = Encoding.ASCII.GetString(Buff)
+                    Fs.Read(RawData, 0, Length)
+                    Fs.Read(Buff, 0, 4)
+                    CheckSum = BitConverter.ToUInt32(Buff, 0)
+                    IdPhoto.AddChunk(Length, ChunkType, CheckSum, RawData)
+                    Offset += 8
+                    With .Add("Chunk #" + CStr(IdPhoto.NumberOfChunks)).Nodes
+                        .Add("Offset to Chunk Raw Data: 0x" + Hex(Offset))
+                        .Add("Size of Chunk:" + Str(Length) + " bytes")
+                        .Add("Chunk CRC: 0x" + Hex(CheckSum))
+                        .Add("Type of Chunk: " + ChunkTypeString)
+                    End With
+                    Offset += Length + 4
+                Loop Until ChunkType = PngImage.PngChunkTypeIEND
+                If IdPhoto.ValidateImage() = False Then
+                    MsgBox("Validation failed! This ID-Photo PNG does not seem valid!", vbExclamation, "Error")
+                    GoTo EndDump
+                End If
+            End With
             Dim IdPhotoMetadata As PngImage.PngChunkIHdr
             IdPhoto.GetBasicMetadata(IdPhotoMetadata)
             .Add("Width:" + Str(IdPhotoMetadata.Width) + " Pixels")
@@ -87,31 +89,33 @@ Public Class Form1
         Dim ProfileLength As Integer = Buff.Length
         With TreeView1.Nodes.Add("Body Photo").Nodes
             Dim CurrentOffset As Integer = EffectiveOffset + 8
-            ' Traverse all chunks
-            Do
-                Dim Tmp(3) As Byte
-                Dim ChunkTypeString As String
-                Array.Copy(Buff, CurrentOffset, Tmp, 0, 4)
-                Array.Reverse(Tmp)
-                Length = BitConverter.ToUInt32(Tmp, 0)
-                ChunkType = BitConverter.ToUInt32(Buff, CurrentOffset + 4)
-                ChunkTypeString = Encoding.ASCII.GetString(Buff, CurrentOffset + 4, 4)
-                ReDim RawData(Length - 1)
-                Array.Copy(Buff, CurrentOffset + 8, RawData, 0, Length)
-                CheckSum = BitConverter.ToUInt32(Buff, CurrentOffset + Length + 8)
-                BodyPhoto.AddChunk(Length, ChunkType, CheckSum, RawData)
-                With .Add("Chunk #" + CStr(BodyPhoto.NumberOfChunks)).Nodes
-                    .Add("Offset to Chunk Raw Data: 0x" + Hex(CurrentOffset + 8))
-                    .Add("Size of Chunk:" + Str(Length) + " bytes")
-                    .Add("Chunk CRC: 0x" + Hex(CheckSum))
-                    .Add("Type of Chunk: " + ChunkTypeString)
-                End With
-                CurrentOffset += Length + 12
-            Loop Until ChunkType = PngImage.PngChunkTypeIEND
-            If BodyPhoto.ValidateImage() = False Then
-                MsgBox("Validation failed! Body-Photo PNG does not seem valid!", vbExclamation, "Error")
-                GoTo EndDump
-            End If
+            With .Add("Chunks").Nodes
+                ' Traverse all chunks
+                Do
+                    Dim Tmp(3) As Byte
+                    Dim ChunkTypeString As String
+                    Array.Copy(Buff, CurrentOffset, Tmp, 0, 4)
+                    Array.Reverse(Tmp)
+                    Length = BitConverter.ToUInt32(Tmp, 0)
+                    ChunkType = BitConverter.ToUInt32(Buff, CurrentOffset + 4)
+                    ChunkTypeString = Encoding.ASCII.GetString(Buff, CurrentOffset + 4, 4)
+                    ReDim RawData(Length - 1)
+                    Array.Copy(Buff, CurrentOffset + 8, RawData, 0, Length)
+                    CheckSum = BitConverter.ToUInt32(Buff, CurrentOffset + Length + 8)
+                    BodyPhoto.AddChunk(Length, ChunkType, CheckSum, RawData)
+                    With .Add("Chunk #" + CStr(BodyPhoto.NumberOfChunks)).Nodes
+                        .Add("Offset to Chunk Raw Data: 0x" + Hex(CurrentOffset + 8))
+                        .Add("Size of Chunk:" + Str(Length) + " bytes")
+                        .Add("Chunk CRC: 0x" + Hex(CheckSum))
+                        .Add("Type of Chunk: " + ChunkTypeString)
+                    End With
+                    CurrentOffset += Length + 12
+                Loop Until ChunkType = PngImage.PngChunkTypeIEND
+                If BodyPhoto.ValidateImage() = False Then
+                    MsgBox("Validation failed! Body-Photo PNG does not seem valid!", vbExclamation, "Error")
+                    GoTo EndDump
+                End If
+            End With
             Dim BodyPhotoMetadata As PngImage.PngChunkIHdr
             BodyPhoto.GetBasicMetadata(BodyPhotoMetadata)
             .Add("Width:" + Str(BodyPhotoMetadata.Width) + " Pixels")
@@ -158,11 +162,12 @@ EndDump:
             ShowSave = True
         End If
         If ShowSave Then
-            SaveFileDialog1.ShowDialog()
-            Dim Fs As New FileStream(SaveFileDialog1.FileName, FileMode.Create)
-            Photo.Save(Fs)
-            Fs.Close()
-            PictureBox1.Image = Image.FromFile(SaveFileDialog1.FileName)
+            If SaveFileDialog1.ShowDialog() = DialogResult.OK Then
+                Dim Fs As New FileStream(SaveFileDialog1.FileName, FileMode.Create)
+                Photo.Save(Fs)
+                Fs.Close()
+                PictureBox1.Image = Image.FromFile(SaveFileDialog1.FileName)
+            End If
         End If
     End Sub
 End Class
