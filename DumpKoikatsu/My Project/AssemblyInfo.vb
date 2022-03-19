@@ -9,11 +9,11 @@ Imports System.Runtime.InteropServices
 ' Review the values of the assembly attributes
 
 <Assembly: AssemblyTitle("DumpKoikatsu")> 
-<Assembly: AssemblyDescription("")> 
-<Assembly: AssemblyCompany("")> 
+<Assembly: AssemblyDescription("A simple utility that dumps data from Koikatsu Party character's PNG profile.")> 
+<Assembly: AssemblyCompany("zero.tangptr@gmail.com")> 
 <Assembly: AssemblyProduct("DumpKoikatsu")> 
-<Assembly: AssemblyCopyright("Copyright ©  2022")> 
-<Assembly: AssemblyTrademark("")> 
+<Assembly: AssemblyCopyright("Copyright © zero.tangptr@gmail.com 2022")> 
+<Assembly: AssemblyTrademark("Powered by zero.tangptr@gmail.com")> 
 
 <Assembly: ComVisible(False)>
 
