@@ -4,6 +4,8 @@ Imports System.Text
 Public Class Form1
     Dim BodyPhoto As PngImage
     Dim IdPhoto As PngImage
+    Dim Intersession() As Byte
+    Dim Profile() As Byte
     Dim Gfx As Graphics
 
     Private Sub Button1_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles Button1.Click
@@ -85,7 +87,12 @@ Public Class Form1
             MsgBox("The Body Photo is missing!", vbExclamation, "Error")
             GoTo EndDump
         End If
-        TreeView1.Nodes.Add("Intersession Length:" + Str(EffectiveOffset) + " bytes")
+        With TreeView1.Nodes.Add("Intersession").Nodes
+            .Add("Size:" + Str(EffectiveOffset) + " bytes").Tag = CStr(EffectiveOffset)
+            .Add("Offset: 0x" + Hex(Offset)).Tag = CStr(Offset)
+        End With
+        ReDim Intersession(EffectiveOffset - 1)
+        Array.Copy(Buff, Intersession, EffectiveOffset)
         Dim ProfileLength As Integer = Buff.Length
         With TreeView1.Nodes.Add("Body Photo").Nodes
             Dim CurrentOffset As Integer = EffectiveOffset + 8
@@ -132,7 +139,12 @@ Public Class Form1
             End Select
             ProfileLength -= CurrentOffset
         End With
-        TreeView1.Nodes.Add("Profile Size:" + Str(ProfileLength) + " bytes")
+        With TreeView1.Nodes.Add("Profile").Nodes
+            .Add("Size:" + Str(ProfileLength) + " bytes").Tag = CStr(ProfileLength)
+            .Add("Offset: 0x" + Hex(Fs.Length - ProfileLength)).Tag = CStr(Fs.Length - ProfileLength)
+        End With
+        ReDim Profile(ProfileLength - 1)
+        Array.Copy(Buff, Buff.Length - ProfileLength, Profile, 0, ProfileLength)
 EndDump:
         Fs.Close()
     End Sub
@@ -148,8 +160,8 @@ EndDump:
     End Sub
 
     Private Sub TreeView1_DoubleClick(ByVal sender As Object, ByVal e As System.EventArgs) Handles TreeView1.DoubleClick
-        Dim ShowSave As Boolean = False
-        Dim Photo As PngImage = Nothing
+        Dim ShowSave As Boolean = False, SaveBin As Boolean = False
+        Dim Photo As PngImage = Nothing, BinBuff(1) As Byte
         If TreeView1.SelectedNode.Text = "ID Photo" Then
             SaveFileDialog1.Title = "Save the ID Photo..."
             SaveFileDialog1.FileName = "id_photo.png"
@@ -160,13 +172,31 @@ EndDump:
             SaveFileDialog1.FileName = "body_photo.png"
             Photo = BodyPhoto
             ShowSave = True
+        ElseIf TreeView1.SelectedNode.Text = "Intersession" Then
+            SaveFileDialog1.Title = "Save the Intersession Binary..."
+            SaveFileDialog1.FileName = "intersession.bin"
+            BinBuff = Intersession
+            SaveBin = True
+        ElseIf TreeView1.SelectedNode.Text = "Profile" Then
+            SaveFileDialog1.Title = "Save the Profile Binary..."
+            SaveFileDialog1.FileName = "profile.bin"
+            BinBuff = Profile
+            SaveBin = True
         End If
         If ShowSave Then
+            SaveFileDialog1.Filter = "Portable Network Graphics|*.png"
             If SaveFileDialog1.ShowDialog() = DialogResult.OK Then
                 Dim Fs As New FileStream(SaveFileDialog1.FileName, FileMode.Create)
                 Photo.Save(Fs)
                 Fs.Close()
                 PictureBox1.Image = Image.FromFile(SaveFileDialog1.FileName)
+            End If
+        ElseIf SaveBin Then
+            SaveFileDialog1.Filter = "Binary File|*.bin"
+            If SaveFileDialog1.ShowDialog() = Windows.Forms.DialogResult.OK Then
+                Dim Fs As New FileStream(SaveFileDialog1.FileName, FileMode.Create)
+                Fs.Write(BinBuff, 0, BinBuff.Length)
+                Fs.Close()
             End If
         End If
     End Sub

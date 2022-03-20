@@ -111,10 +111,6 @@ Partial Class Form1
         Me.PictureBox1.TabIndex = 0
         Me.PictureBox1.TabStop = False
         '
-        'SaveFileDialog1
-        '
-        Me.SaveFileDialog1.Filter = "Portable Network Graphics|*.png"
-        '
         'ToolStripStatusLabel1
         '
         Me.ToolStripStatusLabel1.Name = "ToolStripStatusLabel1"
